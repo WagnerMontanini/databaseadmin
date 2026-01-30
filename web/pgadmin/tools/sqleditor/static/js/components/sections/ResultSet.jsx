@@ -8,9 +8,9 @@
 //////////////////////////////////////////////////////////////
 import _ from 'lodash';
 import { styled } from '@mui/material/styles';
-import React, { useContext, useEffect, useRef, useState }  from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import QueryToolDataGrid, { GRID_ROW_SELECT_KEY } from '../QueryToolDataGrid';
-import {CONNECTION_STATUS, PANELS, QUERY_TOOL_EVENTS, MODAL_DIALOGS} from '../QueryToolConstants';
+import { CONNECTION_STATUS, PANELS, QUERY_TOOL_EVENTS, MODAL_DIALOGS } from '../QueryToolConstants';
 import url_for from 'sources/url_for';
 import getApiInstance, { parseApiError } from '../../../../../../static/js/api_instance';
 import { QueryToolContext, QueryToolEventsContext } from '../QueryToolComponent';
@@ -33,7 +33,7 @@ import pgAdmin from 'sources/pgadmin';
 import { connectServer, connectServerModal } from '../connectServer';
 import { useLatestFunc } from '../../../../../../static/js/custom_hooks';
 
-const StyledBox = styled(Box)(({theme}) => ({
+const StyledBox = styled(Box)(({ theme }) => ({
   display: 'flex',
   height: '100%',
   flexDirection: 'column',
@@ -41,7 +41,7 @@ const StyledBox = styled(Box)(({theme}) => ({
 }));
 
 export class ResultSetUtils {
-  constructor(api, queryToolCtx, transId, isQueryTool=true) {
+  constructor(api, queryToolCtx, transId, isQueryTool = true) {
     this.api = api;
     this.transId = transId;
     this.startTime = new Date();
@@ -130,21 +130,21 @@ export class ResultSetUtils {
     let secs, mins, hrs;
 
     /* Extract seconds from millisecs */
-    secs = parseInt(total_ms/1000);
-    total_ms = total_ms%1000;
+    secs = parseInt(total_ms / 1000);
+    total_ms = total_ms % 1000;
 
     /* Extract mins from seconds */
-    mins = parseInt(secs/60);
-    secs = secs%60;
+    mins = parseInt(secs / 60);
+    secs = secs % 60;
 
     /* Extract hrs from mins */
-    hrs = parseInt(mins/60);
-    mins = mins%60;
+    hrs = parseInt(mins / 60);
+    mins = mins % 60;
 
-    result = (hrs>0 ? hrs + ' ' + gettext('hr') + ' ': '')
-            + (mins>0 ? mins + ' ' + gettext('min') + ' ': '')
-            + (hrs<=0 && secs>0 ? secs + ' ' + gettext('secs') + ' ': '')
-            + (hrs<=0 && mins<=0 ? total_ms + ' ' + gettext('msec') + ' ':'');
+    result = (hrs > 0 ? hrs + ' ' + gettext('hr') + ' ' : '')
+      + (mins > 0 ? mins + ' ' + gettext('min') + ' ' : '')
+      + (hrs <= 0 && secs > 0 ? secs + ' ' + gettext('secs') + ' ' : '')
+      + (hrs <= 0 && mins <= 0 ? total_ms + ' ' + gettext('msec') + ' ' : '');
     return result.trim();
   }
 
@@ -176,8 +176,8 @@ export class ResultSetUtils {
     return currentTarget.scrollTop + 10 >= currentTarget.scrollHeight - currentTarget.clientHeight;
   }
 
-  postExecutionApi(query, explainObject, isQueryTool=true, reconnect=false) {
-    if(isQueryTool) {
+  postExecutionApi(query, explainObject, isQueryTool = true, reconnect = false) {
+    if (isQueryTool) {
       return this.api.post(
         ResultSetUtils.generateURLReconnectionFlag('sqleditor.query_tool_start', this.transId, reconnect),
         JSON.stringify({
@@ -192,7 +192,7 @@ export class ResultSetUtils {
     }
   }
 
-  async startExecution(query, explainObject, macroSQL, onIncorrectSQL, flags={
+  async startExecution(query, explainObject, macroSQL, onIncorrectSQL, flags = {
     isQueryTool: true, external: false, reconnect: false, executeCursor: false, refreshData: false,
   }) {
     let startTime = new Date();
@@ -204,31 +204,31 @@ export class ResultSetUtils {
     this.setStartTime(startTime);
     this.query = query;
     this.historyQuerySource = flags.isQueryTool ? QuerySources.EXECUTE : QuerySources.VIEW_DATA;
-    if(flags.refreshData) {
+    if (flags.refreshData) {
       this.historyQuerySource = null;
-    } else if(explainObject) {
-      if(explainObject.analyze) {
+    } else if (explainObject) {
+      if (explainObject.analyze) {
         this.historyQuerySource = QuerySources.EXPLAIN_ANALYZE;
       } else {
         this.historyQuerySource = QuerySources.EXPLAIN;
       }
-    } else if(query == 'COMMIT;') {
+    } else if (query == 'COMMIT;') {
       this.historyQuerySource = QuerySources.COMMIT;
-    } else if(query == 'ROLLBACK;') {
+    } else if (query == 'ROLLBACK;') {
       this.historyQuerySource = QuerySources.ROLLBACK;
     }
     try {
-      let {data: httpMessageData} = await this.postExecutionApi(query, explainObject, flags.isQueryTool, flags.reconnect);
+      let { data: httpMessageData } = await this.postExecutionApi(query, explainObject, flags.isQueryTool, flags.reconnect);
 
       if (ResultSetUtils.isSqlCorrect(httpMessageData)) {
         this.setStartData(httpMessageData.data);
-        if(!flags.isQueryTool) {
+        if (!flags.isQueryTool) {
           this.query = httpMessageData.data.sql;
           this.eventBus.fireEvent(QUERY_TOOL_EVENTS.SET_FILTER_INFO, httpMessageData.data.can_filter, httpMessageData.data.filter_applied);
           this.eventBus.fireEvent(QUERY_TOOL_EVENTS.SET_LIMIT_VALUE, httpMessageData.data.limit);
           this.eventBus.fireEvent(QUERY_TOOL_EVENTS.EDITOR_SET_SQL, httpMessageData.data.sql, false);
         }
-        if(httpMessageData.data.notifies) {
+        if (httpMessageData.data.notifies) {
           this.eventBus.fireEvent(QUERY_TOOL_EVENTS.PUSH_NOTICE, httpMessageData.data.notifies);
         }
         return true;
@@ -248,36 +248,36 @@ export class ResultSetUtils {
           query_source: this.historyQuerySource,
           is_pgadmin_query: false,
         });
-        if(!flags.external) {
+        if (!flags.external) {
           this.eventBus.fireEvent(QUERY_TOOL_EVENTS.HIGHLIGHT_ERROR, httpMessageData.data.result, flags.executeCursor);
         }
       }
-    } catch(e) {
-      if(e?.response?.status == 428){
-        connectServerModal(this.queryToolCtx.modal, e.response?.data?.result, async (passwordData)=>{
-          await connectServer(this.api, this.queryToolCtx.modal, this.queryToolCtx.params.sid, this.queryToolCtx.params.user, passwordData, async ()=>{
+    } catch (e) {
+      if (e?.response?.status == 428) {
+        connectServerModal(this.queryToolCtx.modal, e.response?.data?.result, async (passwordData) => {
+          await connectServer(this.api, this.queryToolCtx.modal, this.queryToolCtx.params.sid, this.queryToolCtx.params.user, passwordData, async () => {
             await this.eventBus.fireEvent(QUERY_TOOL_EVENTS.REINIT_QT_CONNECTION, '', explainObject, macroSQL, flags.executeCursor, true);
           });
-        }, ()=>{
+        }, () => {
           /*This is intentional (SonarQube)*/
         });
-      }else if (e?.response?.data.info == 'CRYPTKEY_MISSING'){
+      } else if (e?.response?.data.info == 'CRYPTKEY_MISSING') {
         let pgBrowser = window.pgAdmin.Browser;
-        pgBrowser.set_master_password('', async (passwordData)=>{
-          await connectServer(this.api, this.queryToolCtx.modal, this.queryToolCtx.params.sid, this.queryToolCtx.params.user, passwordData, async ()=>{
+        pgBrowser.set_master_password('', async (passwordData) => {
+          await connectServer(this.api, this.queryToolCtx.modal, this.queryToolCtx.params.sid, this.queryToolCtx.params.user, passwordData, async () => {
             await this.eventBus.fireEvent(QUERY_TOOL_EVENTS.REINIT_QT_CONNECTION, '', explainObject, macroSQL, flags.executeCursor, true);
           });
-        }, ()=> {
+        }, () => {
           /*This is intentional (SonarQube)*/
         });
         return;
-      }else {
+      } else {
         this.eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_END);
         this.eventBus.fireEvent(QUERY_TOOL_EVENTS.HANDLE_API_ERROR,
           e,
           {
-            connectionLostCallback: ()=>{
-              this.eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_START, query, {explainObject, external: flags.external, reconnect: true, executeCursor: flags.executeCursor});
+            connectionLostCallback: () => {
+              this.eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_START, query, { explainObject, external: flags.external, reconnect: true, executeCursor: flags.executeCursor });
             },
             checkTransaction: true,
           }
@@ -303,7 +303,7 @@ export class ResultSetUtils {
       delay = 1;
     }
 
-    return new Promise((resolve)=>{
+    return new Promise((resolve) => {
       setTimeout(() => {
         resolve(this.api.get(
           url_for('sqleditor.poll', {
@@ -332,8 +332,8 @@ export class ResultSetUtils {
       is_pgadmin_query: false,
     });
     this.eventBus.fireEvent(QUERY_TOOL_EVENTS.HANDLE_API_ERROR, error, {
-      connectionLostCallback: ()=>{
-        this.eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_START, this.query, {explainObject, external: flags.external, reconnect: true, executeCursor: flags.executeCursor});
+      connectionLostCallback: () => {
+        this.eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_START, this.query, { explainObject, external: flags.external, reconnect: true, executeCursor: flags.executeCursor });
       },
       checkTransaction: true,
     });
@@ -343,7 +343,7 @@ export class ResultSetUtils {
     try {
       let httpMessage = await this.poll();
       let msg = '';
-      if(httpMessage.data.data.notifies) {
+      if (httpMessage.data.data.notifies) {
         this.eventBus.fireEvent(QUERY_TOOL_EVENTS.PUSH_NOTICE, httpMessage.data.data.notifies);
       }
 
@@ -352,7 +352,7 @@ export class ResultSetUtils {
         msg = this.queryFinished(httpMessage, onResultsAvailable, onExplain);
       } else if (ResultSetUtils.isQueryStillRunning(httpMessage)) {
         this.eventBus.fireEvent(QUERY_TOOL_EVENTS.SET_CONNECTION_STATUS, httpMessage.data.data.transaction_status);
-        if(httpMessage.data.data.result) {
+        if (httpMessage.data.data.result) {
           this.eventBus.fireEvent(QUERY_TOOL_EVENTS.SET_MESSAGE, httpMessage.data.data.result, true);
         }
         return Promise.resolve(this.pollForResult(onResultsAvailable, onExplain, onPollError, explainObject, flags));
@@ -369,10 +369,10 @@ export class ResultSetUtils {
         this.eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_END);
         this.eventBus.fireEvent(QUERY_TOOL_EVENTS.TASK_END, gettext('Execution Cancelled'), this.endTime);
       }
-      if(this.qtPref?.query_success_notification) {
+      if (this.qtPref?.query_success_notification) {
         pgAdmin.Browser.notifier.success(msg);
       }
-      if(!ResultSetUtils.isQueryStillRunning(httpMessage) && this.historyQuerySource) {
+      if (!ResultSetUtils.isQueryStillRunning(httpMessage) && this.historyQuerySource) {
         this.eventBus.fireEvent(QUERY_TOOL_EVENTS.PUSH_HISTORY, {
           status: true,
           start_time: this.startTime,
@@ -401,7 +401,7 @@ export class ResultSetUtils {
 
   stopExecution() {
     return this.api.post(
-      url_for('sqleditor.cancel_transaction', {'trans_id': this.transId})
+      url_for('sqleditor.cancel_transaction', { 'trans_id': this.transId })
     );
   }
 
@@ -476,7 +476,7 @@ export class ResultSetUtils {
       });
   }
 
-  async saveResultsToFile(fileName, onProgress) {
+  async saveResultsToFile(fileName, onProgress, fileFormat = null, mimeType = 'text/csv') {
     try {
       await DownloadUtils.downloadFileStream({
         url: url_for('sqleditor.query_tool_download', {
@@ -484,8 +484,13 @@ export class ResultSetUtils {
         }),
         options: {
           method: 'POST',
-          body: JSON.stringify({filename: fileName, query_commited: this.hasQueryCommitted})
-        }}, fileName, 'text/csv', onProgress);
+          body: JSON.stringify({
+            filename: fileName,
+            query_commited: this.hasQueryCommitted,
+            ...(fileFormat ? { format: fileFormat } : {}),
+          })
+        }
+      }, fileName, mimeType, onProgress);
       this.eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_SAVE_RESULTS_END);
     } catch (error) {
       this.eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_SAVE_RESULTS_END);
@@ -622,18 +627,18 @@ export class ResultSetUtils {
     let self = this;
 
     let pgTypesOidMap = {};
-    _.isArray(data.types) && data.types?.forEach((t)=>{
+    _.isArray(data.types) && data.types?.forEach((t) => {
       pgTypesOidMap[t.oid] = t.typname;
     });
 
     // Create columns
-    data.colinfo.forEach(function(c) {
+    data.colinfo.forEach(function (c) {
       let isPK = false,
         isEditable = data.can_edit && (!self.isQueryTool || c.is_editable);
 
       // Check whether this column is a primary key
       if (isEditable) {
-        isPK = _.some(data.primary_keys||[], (_v, key)=>key === c.name);
+        isPK = _.some(data.primary_keys || [], (_v, key) => key === c.name);
       }
 
       // Create column label and type.
@@ -644,11 +649,11 @@ export class ResultSetUtils {
   }
 
   processClipboardVal(columnVal, col, rawCopiedVal, pasteSerials) {
-    if(columnVal === '' ) {
-      if(col.has_default_val) {
+    if (columnVal === '') {
+      if (col.has_default_val) {
         // if column has default value
         columnVal = undefined;
-      } else if(rawCopiedVal === null) {
+      } else if (rawCopiedVal === null) {
         columnVal = null;
       }
     } else if (col.has_default_val && col.seqtypid && !pasteSerials) {
@@ -656,12 +661,12 @@ export class ResultSetUtils {
       columnVal = undefined;
     }
 
-    if(col.cell === 'boolean') {
-      if(columnVal == 'true') {
+    if (col.cell === 'boolean') {
+      if (columnVal == 'true') {
         columnVal = true;
-      } else if(columnVal == 'false') {
+      } else if (columnVal == 'false') {
         columnVal = false;
-      } else if(col.has_default_val) {
+      } else if (col.has_default_val) {
         columnVal = undefined;
       } else {
         columnVal = null;
@@ -670,28 +675,28 @@ export class ResultSetUtils {
     return columnVal;
   }
 
-  processRows(result, columns, options={}) {
+  processRows(result, columns, options = {}) {
     let retVal = [];
-    let {fromClipboard=false, pasteSerials=false, isNewRow=false} = options;
-    if(!_.isArray(result) || !_.size(result)) {
+    let { fromClipboard = false, pasteSerials = false, isNewRow = false } = options;
+    if (!_.isArray(result) || !_.size(result)) {
       return retVal;
     }
     let copiedRowsObjects = [];
-    if(fromClipboard) {
+    if (fromClipboard) {
       try {
         /* If the raw row objects are available, use to them identify null values */
         copiedRowsObjects = JSON.parse(localStorage.getItem('copied-rows'));
-      } catch {/* Suppress the error */}
+      } catch {/* Suppress the error */ }
     }
-    for(const [recIdx, rec] of result?.entries()??[]) {
+    for (const [recIdx, rec] of result?.entries() ?? []) {
       // Convert 2darray to dict.
       let rowObj = {};
-      for(const col of columns) {
+      for (const col of columns) {
         // if column data is not present for existing rows then use null
         // for new rows, it should be undefined if there is default value.
         let columnVal = rec[col.pos] ?? ((col.has_default_val && isNewRow) ? undefined : null);
         /* If the source is clipboard, then it needs some extra handling */
-        if(fromClipboard) {
+        if (fromClipboard) {
           columnVal = this.processClipboardVal(columnVal, col, copiedRowsObjects[recIdx]?.[col.key], pasteSerials);
         }
         rowObj[col.key] = columnVal;
@@ -705,13 +710,13 @@ export class ResultSetUtils {
   }
 
   getPlanJson(result, data) {
-    if(result && !_.isEmpty(data.colinfo)
+    if (result && !_.isEmpty(data.colinfo)
       && data.colinfo[0].name == 'QUERY PLAN' && !_.isEmpty(data.types)
       && data.types[0] && data.types[0].typname === 'json') {
       /* json is sent as text, parse it */
       let planJson = JSON.parse(data.result[0][0]);
       if (planJson?.[0]?.hasOwnProperty('Plan') &&
-            _.isObject(planJson[0]['Plan'])
+        _.isObject(planJson[0]['Plan'])
       ) {
         return planJson;
       }
@@ -730,17 +735,17 @@ export class ResultSetUtils {
     if (httpMessage.data.data?.server_cursor) {
       this.eventBus.fireEvent(QUERY_TOOL_EVENTS.SERVER_CURSOR, httpMessage.data.data?.server_cursor);
     }
-    if(this.hasResultsToDisplay(httpMessage.data.data)) {
+    if (this.hasResultsToDisplay(httpMessage.data.data)) {
       let msg1 = gettext('Successfully run. Total query runtime: %s.', this.queryRunTime());
       let msg2 = gettext('%s rows affected.', httpMessage.data.data?.rows_affected);
       retMsg = msg1 + ' ' + msg2;
       tabMsg = msg1 + '\n' + msg2;
-      if(!_.isNull(httpMessage.data.data.additional_messages)){
+      if (!_.isNull(httpMessage.data.data.additional_messages)) {
         tabMsg = httpMessage.data.data.additional_messages + '\n' + tabMsg;
       }
       this.eventBus.fireEvent(QUERY_TOOL_EVENTS.SET_MESSAGE, tabMsg, true);
       this.setClientPK(httpMessage.data.data.client_primary_key);
-      let {result} = httpMessage.data.data;
+      let { result } = httpMessage.data.data;
       let data = {
         ...this.startData,
         ...httpMessage.data.data,
@@ -751,7 +756,7 @@ export class ResultSetUtils {
       onResultsAvailable(data, procColumns, this.processRows(result, procColumns));
       this.setStartData(null);
       let planJson = this.getPlanJson(result, data);
-      if(planJson) {
+      if (planJson) {
         onExplain(planJson);
       } else {
         onExplain(null);
@@ -787,10 +792,10 @@ function dataChangeReducer(state, action) {
   case 'added':
     action.add = action.add || {};
     action.remove = action.remove || [];
-    dataChange.added = _.pickBy(dataChange.added, (_v, k)=>(action.remove.indexOf(k) == -1));
-    dataChange.added_index = _.pickBy(dataChange.added_index, (v)=>(action.remove.indexOf(v) == -1));
-    count = _.max(Object.keys(dataChange.added_index).map(k=>+k))||0;
-    Object.keys(action.add).forEach((k)=>{
+    dataChange.added = _.pickBy(dataChange.added, (_v, k) => (action.remove.indexOf(k) == -1));
+    dataChange.added_index = _.pickBy(dataChange.added_index, (v) => (action.remove.indexOf(v) == -1));
+    count = _.max(Object.keys(dataChange.added_index).map(k => +k)) || 0;
+    Object.keys(action.add).forEach((k) => {
       dataChange.added_index[++count] = k;
     });
     dataChange.added = {
@@ -799,12 +804,12 @@ function dataChangeReducer(state, action) {
     };
     break;
   case 'deleted':
-    dataChange.deleted = _.pickBy(dataChange.deleted, (_v, k)=>(action.remove.indexOf(k) == -1));
+    dataChange.deleted = _.pickBy(dataChange.deleted, (_v, k) => (action.remove.indexOf(k) == -1));
     dataChange.deleted = {
       ...dataChange.deleted,
       ...action.add,
     };
-    if(action.all) {
+    if (action.all) {
       dataChange.delete_all = true;
     } else {
       dataChange.delete_all = false;
@@ -833,7 +838,7 @@ export function ResultSet() {
   const queryToolCtx = useContext(QueryToolContext);
   const layoutDocker = useContext(LayoutDockerContext);
   const [loaderText, setLoaderText] = useState('');
-  const [dataOutputQuery,setDataOutputQuery] = useState('');
+  const [dataOutputQuery, setDataOutputQuery] = useState('');
   const [queryData, setQueryData] = useState(null);
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
@@ -851,16 +856,16 @@ export function ResultSet() {
 
   const selectedCell = useRef([]);
   const selectedRange = useRef(null);
-  const setSelectedCell = (val)=>{
-    selectedCell.current=val;
+  const setSelectedCell = (val) => {
+    selectedCell.current = val;
     fireRowsColsCellChanged();
   };
-  const setSelectedRange = (val)=>{
-    if(val.startColumnIdx != val.endColumnIdx ||
+  const setSelectedRange = (val) => {
+    if (val.startColumnIdx != val.endColumnIdx ||
       val.startRowIdx != val.endRowIdx) {
-      selectedRange.current=val;
+      selectedRange.current = val;
     } else {
-      selectedRange.current=null;
+      selectedRange.current = null;
     }
     fireRowsColsCellChanged();
   };
@@ -875,24 +880,24 @@ export function ResultSet() {
   rsu.current.setLoaderText = setLoaderText;
 
   const isDataChangedRef = useRef(false);
-  useEffect(()=>{
+  useEffect(() => {
     isDataChangedRef.current = Boolean(_.size(dataChangeStore.updated) || _.size(dataChangeStore.added) || _.size(dataChangeStore.deleted));
   }, [dataChangeStore]);
 
-  const fireRowsColsCellChanged = ()=>{
+  const fireRowsColsCellChanged = () => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.SELECTED_ROWS_COLS_CELL_CHANGED, selectedRows.size, selectedColumns.size, selectedRange.current, selectedCell.current?.length);
   };
 
-  const resetSelectionAndChanges = ()=>{
-    dispatchDataChange({type: 'reset'});
+  const resetSelectionAndChanges = () => {
+    dispatchDataChange({ type: 'reset' });
     setSelectedRows(new Set());
     setSelectedColumns(new Set());
   };
 
   const executionStartCallback = async (query, {
-    explainObject, macroSQL, external=false, reconnect=false, executeCursor=false, refreshData=false
-  })=>{
-    const yesCallback = async ()=>{
+    explainObject, macroSQL, external = false, reconnect = false, executeCursor = false, refreshData = false
+  }) => {
+    const yesCallback = async () => {
       /* Reset */
       eventBus.fireEvent(QUERY_TOOL_EVENTS.HIGHLIGHT_ERROR, null);
       resetSelectionAndChanges();
@@ -901,25 +906,25 @@ export function ResultSet() {
       setDataOutputQuery(query);
       return await rsu.current.startExecution(
         query, explainObject, macroSQL,
-        ()=>{
+        () => {
           setColumns([]);
           setRows([]);
         },
-        {isQueryTool: queryToolCtx.params.is_query_tool, external: external, reconnect: reconnect, executeCursor: executeCursor, refreshData: refreshData}
+        { isQueryTool: queryToolCtx.params.is_query_tool, external: external, reconnect: reconnect, executeCursor: executeCursor, refreshData: refreshData }
       );
     };
 
-    const pollCallback = async ()=>{
+    const pollCallback = async () => {
       rsu.current.pollForResult(
-        (procQueryData, procColumns, procRows)=>{
-          setRowsResetKey((prev)=>prev+1);
+        (procQueryData, procColumns, procRows) => {
+          setRowsResetKey((prev) => prev + 1);
           setQueryData(procQueryData);
           setRows(procRows);
           setColumns(procColumns);
         },
-        (planJson)=>{
+        (planJson) => {
           /* No need to open if plan is empty */
-          if(!layoutDocker.isTabOpen(PANELS.EXPLAIN) && !planJson) {
+          if (!layoutDocker.isTabOpen(PANELS.EXPLAIN) && !planJson) {
             return;
           }
           layoutDocker.openTab({
@@ -929,33 +934,33 @@ export function ResultSet() {
             closable: true,
           }, PANELS.MESSAGES, 'after-tab', true);
         },
-        ()=>{
+        () => {
           setColumns([]);
           setRows([]);
         },
         explainObject,
-        {isQueryTool: queryToolCtx.params.is_query_tool, external: external, reconnect: reconnect, executeCursor: executeCursor}
+        { isQueryTool: queryToolCtx.params.is_query_tool, external: external, reconnect: reconnect, executeCursor: executeCursor }
       );
     };
 
-    const executeAndPoll = async ()=>{
-      await yesCallback().then((res)=>{
-        if(res){
+    const executeAndPoll = async () => {
+      await yesCallback().then((res) => {
+        if (res) {
           pollCallback();
         } else {
           eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_END);
         }
-      }).catch((err)=>{
+      }).catch((err) => {
         console.error(err);
       });
     };
 
-    if(isDataChangedRef.current && !refreshData) {
+    if (isDataChangedRef.current && !refreshData) {
       queryToolCtx.modal.confirm(
         gettext('Unsaved changes'),
         gettext('The data has been modified, but not saved. Are you sure you wish to discard the changes?'),
         executeAndPoll,
-        function() {
+        function () {
           eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_END);
         }
       );
@@ -964,8 +969,8 @@ export function ResultSet() {
     }
   };
 
-  const triggerFilter = async (include)=>{
-    if(_.isEmpty(selectedCell.current)) {
+  const triggerFilter = async (include) => {
+    if (_.isEmpty(selectedCell.current)) {
       return;
     }
     setLoaderText(gettext('Applying the new filter...'));
@@ -973,14 +978,14 @@ export function ResultSet() {
       let data = {
         [selectedCell.current[1].key]: selectedCell.current[0][selectedCell.current[1].key],
       };
-      if(include) {
+      if (include) {
         await rsu.current.includeFilter(data);
       } else {
         await rsu.current.excludeFilter(data);
       }
       setLoaderText('');
       eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_EXECUTION);
-    } catch(err) {
+    } catch (err) {
       eventBus.fireEvent(QUERY_TOOL_EVENTS.HANDLE_API_ERROR, err, {
         checkTransaction: true,
       });
@@ -988,41 +993,57 @@ export function ResultSet() {
     }
   };
 
-  useEffect(()=>{
-    eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_STOP_EXECUTION, async ()=>{
+  useEffect(() => {
+    eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_STOP_EXECUTION, async () => {
       try {
         await rsu.current.stopExecution();
         eventBus.fireEvent(QUERY_TOOL_EVENTS.SET_CONNECTION_STATUS, CONNECTION_STATUS.TRANSACTION_STATUS_IDLE);
         eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_END);
-      } catch(e) {
+      } catch (e) {
         pgAdmin.Browser.notifier.error(parseApiError(e));
       }
     });
 
-    eventBus.registerListener(QUERY_TOOL_EVENTS.EXECUTION_END, ()=>{
+    eventBus.registerListener(QUERY_TOOL_EVENTS.EXECUTION_END, () => {
       setLoaderText(null);
     });
 
-    eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_SAVE_RESULTS, async ()=>{
-      let extension = queryToolCtx.preferences?.sqleditor?.csv_field_separator === ',' ? '.csv': '.txt';
+    eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_SAVE_RESULTS, async (opts = {}) => {
+      const format = opts?.format || null;
+      const formatInfo = {
+        csv: { ext: '.csv', mime: 'text/csv' },
+        tsv: { ext: '.tsv', mime: 'text/tab-separated-values' },
+        json: { ext: '.json', mime: 'application/json' },
+        jsonl: { ext: '.jsonl', mime: 'application/x-ndjson' },
+      };
+      let extension;
+      let mimeType;
+      if (format && formatInfo[format]) {
+        extension = formatInfo[format].ext;
+        mimeType = formatInfo[format].mime;
+      } else {
+        extension = queryToolCtx.preferences?.sqleditor?.csv_field_separator === ',' ? '.csv' : '.txt';
+        mimeType = queryToolCtx.preferences?.sqleditor?.csv_field_separator === ',' ? 'text/csv' : 'text/plain';
+      }
+
       let fileName = 'data-' + new Date().getTime() + extension;
-      if(!queryToolCtx.params.is_query_tool) {
+      if (!queryToolCtx.params.is_query_tool) {
         fileName = queryToolCtx.params.node_name + extension;
       }
       setLoaderText(gettext('Downloading results...'));
-      await rsu.current.saveResultsToFile(fileName, (p)=>{
+      await rsu.current.saveResultsToFile(fileName, (p) => {
         setLoaderText(gettext('Downloading results(%s)...', p));
-      });
+      }, format, mimeType);
       setLoaderText('');
     });
 
-    eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_SET_LIMIT, async (limit)=>{
+    eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_SET_LIMIT, async (limit) => {
       setLoaderText(gettext('Setting the limit on the result...'));
       try {
         await rsu.current.setLimit(limit);
         setLoaderText('');
         eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_EXECUTION);
-      } catch(err) {
+      } catch (err) {
         eventBus.fireEvent(QUERY_TOOL_EVENTS.HANDLE_API_ERROR, err, {
           checkTransaction: true,
         });
@@ -1030,13 +1051,13 @@ export function ResultSet() {
       }
     });
 
-    eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_REMOVE_FILTER, async ()=>{
+    eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_REMOVE_FILTER, async () => {
       setLoaderText(gettext('Removing the filter...'));
       try {
         await rsu.current.removeFilter();
         setLoaderText('');
         eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_EXECUTION);
-      } catch(err) {
+      } catch (err) {
         eventBus.fireEvent(QUERY_TOOL_EVENTS.HANDLE_API_ERROR, err, {
           checkTransaction: true,
         });
@@ -1047,8 +1068,8 @@ export function ResultSet() {
 
     eventBus.registerListener(QUERY_TOOL_EVENTS.GOTO_LAST_SCROLL, triggerResetScroll);
 
-    eventBus.registerListener(QUERY_TOOL_EVENTS.ALL_PAGE_ROWS_SELECTED, (selectAll)=>{
-      if(selectAll) {
+    eventBus.registerListener(QUERY_TOOL_EVENTS.ALL_PAGE_ROWS_SELECTED, (selectAll) => {
+      if (selectAll) {
         setAllRowsSelect('PAGE');
       } else {
         setAllRowsSelect('NONE');
@@ -1056,41 +1077,41 @@ export function ResultSet() {
       setSelectedColumns(new Set());
     });
 
-    eventBus.registerListener(QUERY_TOOL_EVENTS.ALL_ROWS_SELECTED, ()=>{
+    eventBus.registerListener(QUERY_TOOL_EVENTS.ALL_ROWS_SELECTED, () => {
       setAllRowsSelect('ALL');
     });
 
-    eventBus.registerListener(QUERY_TOOL_EVENTS.CLEAR_ROWS_SELECTED, ()=>{
+    eventBus.registerListener(QUERY_TOOL_EVENTS.CLEAR_ROWS_SELECTED, () => {
       setSelectedRows(new Set());
       setAllRowsSelect('NONE');
     });
   }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
     const deregExec = eventBus.registerListener(QUERY_TOOL_EVENTS.EXECUTION_START, executionStartCallback);
-    return ()=>{
+    return () => {
       deregExec();
     };
   }, [dataChangeStore, dataOutputQuery]);
 
-  useEffect(()=>{
+  useEffect(() => {
     fireRowsColsCellChanged();
     setAllRowsSelect('NONE');
   }, [selectedRows.size, selectedColumns.size]);
 
-  useEffect(()=>{
+  useEffect(() => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.ALL_ROWS_SELECTED_STATUS, allRowsSelect);
   }, [allRowsSelect]);
 
-  useEffect(()=>{
+  useEffect(() => {
     rsu.current.transId = queryToolCtx.params.trans_id;
   }, [queryToolCtx.params.trans_id]);
 
-  useEffect(()=>{
+  useEffect(() => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.RESET_GRAPH_VISUALISER, columns);
   }, [columns]);
 
-  const fetchWindow = async (fromRownum, toRownum, callback)=>{
+  const fetchWindow = async (fromRownum, toRownum, callback) => {
     let res = [];
     setLoaderText(gettext('Fetching rows...'));
     try {
@@ -1098,17 +1119,17 @@ export function ResultSet() {
       resetSelectionAndChanges();
       const newRows = rsu.current.processRows(res.data.data.result, columns);
       setRows([...newRows]);
-      setQueryData((prev)=>({
+      setQueryData((prev) => ({
         ...prev,
         pagination: res.data.data.pagination,
-        rows_fetched_to: res.data.data.rows_fetched_to!=0 ? res.data.data.rows_fetched_to : prev.rows_fetched_to,
+        rows_fetched_to: res.data.data.rows_fetched_to != 0 ? res.data.data.rows_fetched_to : prev.rows_fetched_to,
       }));
     } catch (e) {
       eventBus.fireEvent(QUERY_TOOL_EVENTS.HANDLE_API_ERROR,
         e,
         {
-          connectionLostCallback: ()=>{
-            eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_START, rsu.current.query, {external: false, reconnect: true});
+          connectionLostCallback: () => {
+            eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_START, rsu.current.query, { external: false, reconnect: true });
           },
           checkTransaction: true,
         }
@@ -1119,17 +1140,17 @@ export function ResultSet() {
     callback?.();
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     let deregExecEnd;
-    const deregFetch = eventBus.registerListener(QUERY_TOOL_EVENTS.FETCH_WINDOW, (...args)=>{
-      const impl = ()=> {
-        if(pageDataOutOfSync.current) {
-          deregExecEnd = eventBus.registerListener(QUERY_TOOL_EVENTS.EXECUTION_END, (success)=>{
-            if(!success) return;
+    const deregFetch = eventBus.registerListener(QUERY_TOOL_EVENTS.FETCH_WINDOW, (...args) => {
+      const impl = () => {
+        if (pageDataOutOfSync.current) {
+          deregExecEnd = eventBus.registerListener(QUERY_TOOL_EVENTS.EXECUTION_END, (success) => {
+            if (!success) return;
             pageDataOutOfSync.current = false;
             fetchWindow(...args);
           }, true);
-          eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_START, rsu.current.query, {refreshData: true});
+          eventBus.fireEvent(QUERY_TOOL_EVENTS.EXECUTION_START, rsu.current.query, { refreshData: true });
           // executionStartCallback(rsu.current.query, {refreshData: true});
         } else {
           pageDataOutOfSync.current = false;
@@ -1137,12 +1158,12 @@ export function ResultSet() {
         }
       };
 
-      if(isDataChangedRef.current) {
+      if (isDataChangedRef.current) {
         queryToolCtx.modal.confirm(
           gettext('Unsaved changes'),
           gettext('The data has been modified, but not saved. Are you sure you wish to discard the changes?'),
           impl,
-          function() {
+          function () {
             /* Do nothing */
           }
         );
@@ -1150,59 +1171,59 @@ export function ResultSet() {
         impl();
       }
     });
-    return ()=>{
+    return () => {
       deregFetch();
       deregExecEnd?.();
     };
   }, [columns]);
 
-  useEffect(()=>{
+  useEffect(() => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.TOTAL_ROWS_COUNT, queryData?.rows_affected);
   }, [queryData?.rows_affected]);
 
-  const warnSaveDataClose = ()=>{
+  const warnSaveDataClose = () => {
     // No changes.
-    if(!isDataChangedRef.current || !queryToolCtx.preferences?.sqleditor.prompt_save_data_changes) {
+    if (!isDataChangedRef.current || !queryToolCtx.preferences?.sqleditor.prompt_save_data_changes) {
       eventBus.fireEvent(QUERY_TOOL_EVENTS.WARN_SAVE_TEXT_CLOSE);
       return;
     }
-    queryToolCtx.modal.showModal(gettext('Save data changes?'), (closeModal)=>(
+    queryToolCtx.modal.showModal(gettext('Save data changes?'), (closeModal) => (
       <ConfirmSaveContent
         closeModal={closeModal}
         text={gettext('The data has changed. Do you want to save changes?')}
-        onDontSave={()=>{
+        onDontSave={() => {
           eventBus.fireEvent(QUERY_TOOL_EVENTS.WARN_SAVE_TEXT_CLOSE);
         }}
-        onSave={async ()=>{
+        onSave={async () => {
           await triggerSaveData();
           eventBus.fireEvent(QUERY_TOOL_EVENTS.WARN_SAVE_TEXT_CLOSE);
         }}
       />
-    ), {id: modalId});
+    ), { id: modalId });
   };
-  useEffect(()=>{
+  useEffect(() => {
     let isDirty = _.size(dataChangeStore.updated) || _.size(dataChangeStore.added) || _.size(dataChangeStore.deleted);
     eventBus.fireEvent(QUERY_TOOL_EVENTS.DATAGRID_CHANGED, isDirty, dataChangeStore);
 
     eventBus.registerListener(QUERY_TOOL_EVENTS.WARN_SAVE_DATA_CLOSE, warnSaveDataClose);
-    return ()=>{
+    return () => {
       eventBus.deregisterListener(QUERY_TOOL_EVENTS.WARN_SAVE_DATA_CLOSE, warnSaveDataClose);
     };
   }, [dataChangeStore]);
 
-  const triggerSaveData = useLatestFunc(async ()=>{
-    if(!_.size(dataChangeStore.updated) && !_.size(dataChangeStore.added) && !_.size(dataChangeStore.deleted)) {
+  const triggerSaveData = useLatestFunc(async () => {
+    if (!_.size(dataChangeStore.updated) && !_.size(dataChangeStore.added) && !_.size(dataChangeStore.deleted)) {
       return;
     }
     rsu.current.historyQuerySource = QuerySources.SAVE_DATA;
     setLoaderText(gettext('Saving data...'));
     try {
       /* Convert the added info to actual rows */
-      let added = {...dataChangeStore.added};
-      Object.keys(added).forEach((clientPK)=>{
-        added[clientPK].data = _.find(rows, (r)=>rowKeyGetter(r)==clientPK);
+      let added = { ...dataChangeStore.added };
+      Object.keys(added).forEach((clientPK) => {
+        added[clientPK].data = _.find(rows, (r) => rowKeyGetter(r) == clientPK);
       });
-      let {data: respData} = await rsu.current.saveData({
+      let { data: respData } = await rsu.current.saveData({
         updated: dataChangeStore.updated,
         deleted: dataChangeStore.deleted,
         delete_all: dataChangeStore.delete_all,
@@ -1212,7 +1233,7 @@ export function ResultSet() {
       });
 
       try {
-        respData.data.query_results.forEach((r)=>{
+        respData.data.query_results.forEach((r) => {
           eventBus.fireEvent(QUERY_TOOL_EVENTS.PUSH_HISTORY, {
             'status': r.status,
             'start_time': rsu.current.startTime,
@@ -1225,9 +1246,9 @@ export function ResultSet() {
             'info': gettext('This query was generated by pgAdmin as part of a "Save Data" operation'),
           });
         });
-      } catch {/* History errors should not bother others */}
+      } catch {/* History errors should not bother others */ }
 
-      if(!respData.data.status) {
+      if (!respData.data.status) {
         pageDataOutOfSync.current = false;
         eventBus.fireEvent(QUERY_TOOL_EVENTS.SET_MESSAGE, respData.data.result);
         pgAdmin.Browser.notifier.error(respData.data.result, 20000);
@@ -1235,50 +1256,50 @@ export function ResultSet() {
         // only the failed save queries.
         if (respData.data.transaction_status != CONNECTION_STATUS.TRANSACTION_STATUS_IDLE) {
           pgAdmin.Browser.notifier.info(gettext('Saving data changes was rolled back but the current transaction is ' +
-                                'still active; previous queries are unaffected.'));
+            'still active; previous queries are unaffected.'));
         }
         setLoaderText(null);
         return;
       }
 
       pageDataOutOfSync.current = true;
-      if(_.size(dataChangeStore.added)) {
+      if (_.size(dataChangeStore.added)) {
         // Update the rows in a grid after addition
-        respData.data.query_results.forEach((qr)=>{
-          if(!_.isNull(qr.row_added)) {
+        respData.data.query_results.forEach((qr) => {
+          if (!_.isNull(qr.row_added)) {
             let rowClientPK = Object.keys(qr.row_added)[0];
-            setRows((prevRows)=>{
-              let rowIdx = prevRows.findIndex((r)=>rowKeyGetter(r)==rowClientPK);
+            setRows((prevRows) => {
+              let rowIdx = prevRows.findIndex((r) => rowKeyGetter(r) == rowClientPK);
               return [
                 ...prevRows.slice(0, rowIdx),
                 {
                   ...prevRows[rowIdx],
                   ...qr.row_added[rowClientPK],
                 },
-                ...prevRows.slice(rowIdx+1),
+                ...prevRows.slice(rowIdx + 1),
               ];
             });
           }
         });
       }
       let deletedKeys = Object.keys(dataChangeStore.deleted);
-      if(deletedKeys.length == rows.length) {
+      if (deletedKeys.length == rows.length) {
         setRows([]);
       }
-      else if(deletedKeys.length > 0) {
-        setRows((prevRows)=>{
-          return prevRows.filter((row)=>{
+      else if (deletedKeys.length > 0) {
+        setRows((prevRows) => {
+          return prevRows.filter((row) => {
             return deletedKeys.indexOf(row[rsu.current.clientPK]) == -1;
           });
         });
-        setColumns((prev)=>prev);
+        setColumns((prev) => prev);
       }
       resetSelectionAndChanges();
       eventBus.fireEvent(QUERY_TOOL_EVENTS.SET_CONNECTION_STATUS, respData.data.transaction_status);
       eventBus.fireEvent(QUERY_TOOL_EVENTS.SET_MESSAGE, '');
       setLoaderText(null);
       pgAdmin.Browser.notifier.success(gettext('Data saved successfully.'));
-      if(respData.data.transaction_status > CONNECTION_STATUS.TRANSACTION_STATUS_IDLE) {
+      if (respData.data.transaction_status > CONNECTION_STATUS.TRANSACTION_STATUS_IDLE) {
         pgAdmin.Browser.notifier.info(gettext('Auto-commit is off. You still need to commit changes to the database.'));
       }
     } catch (error) {
@@ -1290,12 +1311,12 @@ export function ResultSet() {
     }
   });
 
-  useEffect(()=>{
+  useEffect(() => {
     eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_SAVE_DATA, triggerSaveData);
-    return ()=>eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_SAVE_DATA, triggerSaveData);
+    return () => eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_SAVE_DATA, triggerSaveData);
   }, [dataChangeStore, rows, columns]);
 
-  const getRangeIndexes = ()=>{
+  const getRangeIndexes = () => {
     let startColumnIdx = Math.min(selectedRange.current.startColumnIdx, selectedRange.current.endColumnIdx);
     let endColumnIdx = Math.max(selectedRange.current.startColumnIdx, selectedRange.current.endColumnIdx);
     let startRowIdx = Math.min(selectedRange.current.startRowIdx, selectedRange.current.endRowIdx);
@@ -1303,73 +1324,73 @@ export function ResultSet() {
     return [startColumnIdx, endColumnIdx, startRowIdx, endRowIdx];
   };
 
-  const copyDataFunc = (withHeaders=false)=>{
+  const copyDataFunc = (withHeaders = false) => {
     const queryToolPref = queryToolCtx.preferences.sqleditor;
     let copyData = new CopyData({
       quoting: queryToolPref.results_grid_quoting,
       quote_char: queryToolPref.results_grid_quote_char,
       field_separator: queryToolPref.results_grid_field_separator,
     });
-    let copyRows=[], copyCols=[];
-    if(selectedRows.size > 0) {
+    let copyRows = [], copyCols = [];
+    if (selectedRows.size > 0) {
       copyCols = columns;
-      copyRows = rows.filter((r)=>selectedRows.has(r[rsu.current.clientPK]));
-    } else if(selectedColumns.size > 0) {
+      copyRows = rows.filter((r) => selectedRows.has(r[rsu.current.clientPK]));
+    } else if (selectedColumns.size > 0) {
       /* Row num col is added by QueryDataGrid, index will be +1 */
-      copyCols = _.filter(columns, (_c, i)=>selectedColumns.has(i+1));
-      copyRows = _.map(rows, (r)=>_.pick(r, _.map(copyCols, (c)=>c.key)));
-    } else if(selectedRange.current) {
+      copyCols = _.filter(columns, (_c, i) => selectedColumns.has(i + 1));
+      copyRows = _.map(rows, (r) => _.pick(r, _.map(copyCols, (c) => c.key)));
+    } else if (selectedRange.current) {
       let [startColumnIdx, endColumnIdx, startRowIdx, endRowIdx] = getRangeIndexes();
-      copyCols = _.filter(columns, (_c, i)=>{
+      copyCols = _.filter(columns, (_c, i) => {
         /* Row num col is added by QueryDataGrid, index will be +1 */
-        let idx = i+1;
-        return idx>=startColumnIdx && idx<=endColumnIdx;
+        let idx = i + 1;
+        return idx >= startColumnIdx && idx <= endColumnIdx;
       });
-      copyRows = rows.slice(startRowIdx, endRowIdx+1);
-    } else if(selectedCell.current[0] && selectedCell.current[1]) {
+      copyRows = rows.slice(startRowIdx, endRowIdx + 1);
+    } else if (selectedCell.current[0] && selectedCell.current[1]) {
       copyCols = [selectedCell.current[1]];
-      copyRows = [{[selectedCell.current[1].key]: selectedCell.current[0][selectedCell.current[1].key]}];
+      copyRows = [{ [selectedCell.current[1].key]: selectedCell.current[0][selectedCell.current[1].key] }];
     }
-    if(copyRows.length > 0 && copyCols.length >0) {
+    if (copyRows.length > 0 && copyCols.length > 0) {
       copyData.copyRowsToCsv(copyRows, copyCols, withHeaders);
     }
   };
 
-  const triggerDeleteRows = ()=>{
-    if(!queryData.can_edit) {
+  const triggerDeleteRows = () => {
+    if (!queryData.can_edit) {
       return;
     }
     let add = {};
     let remove = [];
-    let selRowsData = rows.filter((r)=>selectedRows.has(r[rsu.current.clientPK]));
+    let selRowsData = rows.filter((r) => selectedRows.has(r[rsu.current.clientPK]));
     let removeNewlyAdded = [];
-    for(let row of selRowsData) {
+    for (let row of selRowsData) {
       let clientPK = row[rsu.current.clientPK];
-      if(clientPK in dataChangeStore.deleted) {
+      if (clientPK in dataChangeStore.deleted) {
         remove.push(clientPK);
-      } else if(clientPK in dataChangeStore.added) {
+      } else if (clientPK in dataChangeStore.added) {
         /* If deleted from newly added */
         removeNewlyAdded.push(clientPK);
       } else {
         let primaryKeys = {};
-        Object.keys(queryData.primary_keys).forEach((k)=>{
+        Object.keys(queryData.primary_keys).forEach((k) => {
           primaryKeys[k] = row[k];
         });
         add[clientPK] = primaryKeys;
       }
     }
-    if(removeNewlyAdded.length > 0) {
+    if (removeNewlyAdded.length > 0) {
       dispatchDataChange({
         type: 'added',
         remove: removeNewlyAdded,
       });
-      setRows((prev)=>{
-        return prev.filter((r)=>removeNewlyAdded.indexOf(rowKeyGetter(r))==-1);
+      setRows((prev) => {
+        return prev.filter((r) => removeNewlyAdded.indexOf(rowKeyGetter(r)) == -1);
       });
-      setSelectedRows((prev)=>{
+      setSelectedRows((prev) => {
         let newRows = new Set(prev);
-        removeNewlyAdded.forEach((rowId)=>{
-          if(newRows.has(rowId)) {
+        removeNewlyAdded.forEach((rowId) => {
+          if (newRows.has(rowId)) {
             newRows.delete(rowId);
           }
         });
@@ -1385,46 +1406,46 @@ export function ResultSet() {
     });
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     eventBus.registerListener(QUERY_TOOL_EVENTS.COPY_DATA, copyDataFunc);
-    return ()=>{
+    return () => {
       eventBus.deregisterListener(QUERY_TOOL_EVENTS.COPY_DATA, copyDataFunc);
     };
   }, [selectedRows, selectedColumns, columns, rows]);
 
-  useEffect(()=>{
+  useEffect(() => {
     eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_DELETE_ROWS, triggerDeleteRows);
-    return ()=>{
+    return () => {
       eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_DELETE_ROWS, triggerDeleteRows);
     };
   }, [selectedRows, queryData, dataChangeStore, rows, allRowsSelect]);
 
-  useEffect(()=>{
-    const triggerAddRows = (_rows, options)=>{
+  useEffect(() => {
+    const triggerAddRows = (_rows, options) => {
       let insPosn = 0;
-      if(selectedRows.size > 0) {
+      if (selectedRows.size > 0) {
         let selectedRowsSorted = Array.from(selectedRows);
         selectedRowsSorted.sort();
-        insPosn = _.findIndex(rows, (r)=>rowKeyGetter(r)==selectedRowsSorted[selectedRowsSorted.length-1])+1;
+        insPosn = _.findIndex(rows, (r) => rowKeyGetter(r) == selectedRowsSorted[selectedRowsSorted.length - 1]) + 1;
       }
-      let byteaCellSelection = columns.filter(o=>o.type=='bytea');
-      if (byteaCellSelection.length>0) {
-        _rows = _rows.map(x=>{
-          byteaCellSelection.forEach(r=>{
-            x[r.pos]=null;
+      let byteaCellSelection = columns.filter(o => o.type == 'bytea');
+      if (byteaCellSelection.length > 0) {
+        _rows = _rows.map(x => {
+          byteaCellSelection.forEach(r => {
+            x[r.pos] = null;
             return x;
           });
           return x;
         });
       }
       let newRows = rsu.current.processRows(_rows, columns, options);
-      setRows((prev)=>[
+      setRows((prev) => [
         ...prev.slice(0, insPosn),
         ...newRows,
         ...prev.slice(insPosn)
       ]);
       let add = {};
-      newRows.forEach((row)=>{
+      newRows.forEach((row) => {
         add[rowKeyGetter(row)] = {
           err: false,
         };
@@ -1435,32 +1456,32 @@ export function ResultSet() {
       });
     };
     eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_ADD_ROWS, triggerAddRows);
-    return ()=>eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_ADD_ROWS, triggerAddRows);
+    return () => eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_ADD_ROWS, triggerAddRows);
   }, [columns, selectedRows.size]);
 
-  useEffect(()=>{
-    const renderGeometries = (column)=>{
+  useEffect(() => {
+    const renderGeometries = (column) => {
       let selRowsData = rows;
-      if(selectedRows.size != 0) {
-        selRowsData = rows.filter((r)=>selectedRows.has(rowKeyGetter(r)));
-      } else if(selectedColumns.size > 0) {
-        let selectedCols = _.filter(columns, (_c, i)=>selectedColumns.has(i+1));
-        selRowsData = _.map(rows, (r)=>_.pick(r, _.map(selectedCols, (c)=>c.key)));
-      } else if(selectedRange.current) {
-        let [,, startRowIdx, endRowIdx] = getRangeIndexes();
-        selRowsData = rows.slice(startRowIdx, endRowIdx+1);
-      } else if(selectedCell.current?.[0]) {
+      if (selectedRows.size != 0) {
+        selRowsData = rows.filter((r) => selectedRows.has(rowKeyGetter(r)));
+      } else if (selectedColumns.size > 0) {
+        let selectedCols = _.filter(columns, (_c, i) => selectedColumns.has(i + 1));
+        selRowsData = _.map(rows, (r) => _.pick(r, _.map(selectedCols, (c) => c.key)));
+      } else if (selectedRange.current) {
+        let [, , startRowIdx, endRowIdx] = getRangeIndexes();
+        selRowsData = rows.slice(startRowIdx, endRowIdx + 1);
+      } else if (selectedCell.current?.[0]) {
         selRowsData = [selectedCell.current[0]];
       }
       layoutDocker.openTab({
         id: PANELS.GEOMETRY,
-        title:gettext('Geometry Viewer'),
+        title: gettext('Geometry Viewer'),
         content: <GeometryViewer rows={selRowsData} columns={columns} column={column} />,
         closable: true,
       }, PANELS.MESSAGES, 'after-tab', true);
     };
     eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_RENDER_GEOMETRIES, renderGeometries);
-    return ()=>eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_RENDER_GEOMETRIES, renderGeometries);
+    return () => eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_RENDER_GEOMETRIES, renderGeometries);
   }, [rows, columns, selectedRows.size, selectedColumns.size]);
 
   const triggerResetScroll = () => {
@@ -1478,31 +1499,31 @@ export function ResultSet() {
   };
 
 
-  const onRowsChange = (newRows, otherInfo)=>{
+  const onRowsChange = (newRows, otherInfo) => {
     let row = newRows[otherInfo.indexes[0]];
     let clientPK = rowKeyGetter(row);
 
     // Check if column is pk and value is null set it to default value.
-    if(otherInfo.column.has_default_val && _.isNull(row[otherInfo.column.key]) && otherInfo.column.key in queryData.primary_keys) {
+    if (otherInfo.column.has_default_val && _.isNull(row[otherInfo.column.key]) && otherInfo.column.key in queryData.primary_keys) {
       row[otherInfo.column.key] = undefined;
     }
 
-    if(clientPK in (dataChangeStore.added || {})) {
+    if (clientPK in (dataChangeStore.added || {})) {
       /* No need to track this */
-    } else if(clientPK in (dataChangeStore.updated || {})) {
+    } else if (clientPK in (dataChangeStore.updated || {})) {
       dispatchDataChange({
         type: 'updated',
         clientPK: clientPK,
         payload: {
-          data: {[otherInfo.column.key]: row[otherInfo.column.key]},
+          data: { [otherInfo.column.key]: row[otherInfo.column.key] },
         }
       });
     } else {
       let oldRow = rows[otherInfo.indexes[0]];
       /* If there are no primary keys, then discard */
-      if(queryData.can_edit) {
+      if (queryData.can_edit) {
         let primaryKeys = {};
-        Object.keys(queryData.primary_keys).forEach((k)=>{
+        Object.keys(queryData.primary_keys).forEach((k) => {
           primaryKeys[k] = oldRow[k];
         });
         dispatchDataChange({
@@ -1510,7 +1531,7 @@ export function ResultSet() {
           clientPK: clientPK,
           payload: {
             err: false,
-            data: {[otherInfo.column.key]: row[otherInfo.column.key]},
+            data: { [otherInfo.column.key]: row[otherInfo.column.key] },
             primary_keys: primaryKeys,
           }
         });
@@ -1519,28 +1540,28 @@ export function ResultSet() {
     setRows(newRows);
   };
 
-  useEffect(()=>{
-    const showGraphVisualiser = async ()=>{
+  useEffect(() => {
+    const showGraphVisualiser = async () => {
       layoutDocker.openTab({
         id: PANELS.GRAPH_VISUALISER,
         title: gettext('Graph Visualiser'),
-        content: <GraphVisualiser initColumns={columns}  />,
+        content: <GraphVisualiser initColumns={columns} />,
         closable: true,
       }, PANELS.MESSAGES, 'after-tab', true);
     };
 
     eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_GRAPH_VISUALISER, showGraphVisualiser);
-    return ()=>{
+    return () => {
       eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_GRAPH_VISUALISER, showGraphVisualiser);
     };
   }, [columns]);
 
-  const rowKeyGetter = React.useCallback((row)=>row[rsu.current.clientPK]);
+  const rowKeyGetter = React.useCallback((row) => row[rsu.current.clientPK]);
   return (
     <StyledBox ref={containerRef} tabIndex="0">
       <Loader message={loaderText} />
       {!queryData &&
-        <EmptyPanelMessage text={gettext('No data output. Execute a query to get output.')}/>
+        <EmptyPanelMessage text={gettext('No data output. Execute a query to get output.')} />
       }
       {queryData && <>
         <ResultSetToolbar containerRef={containerRef} query={dataOutputQuery}

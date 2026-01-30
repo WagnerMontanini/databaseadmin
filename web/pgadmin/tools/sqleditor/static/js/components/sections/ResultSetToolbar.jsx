@@ -6,7 +6,7 @@
 // This software is released under the PostgreSQL Licence
 //
 //////////////////////////////////////////////////////////////
-import React, {useContext, useCallback, useEffect, useState} from 'react';
+import React, { useContext, useCallback, useEffect, useState } from 'react';
 import { styled } from '@mui/material/styles';
 import { Box, Portal } from '@mui/material';
 import { DefaultButton, PgButtonGroup, PgIconButton } from '../../../../../../static/js/components/Buttons';
@@ -26,7 +26,7 @@ import EditOffRoundedIcon from '@mui/icons-material/EditOffRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import AllInboxRoundedIcon from '@mui/icons-material/AllInboxRounded';
 
-import {QUERY_TOOL_EVENTS} from '../QueryToolConstants';
+import { QUERY_TOOL_EVENTS } from '../QueryToolConstants';
 import { QueryToolContext, QueryToolEventsContext } from '../QueryToolComponent';
 import { PgMenu, PgMenuItem } from '../../../../../../static/js/components/Menu';
 import gettext from 'sources/gettext';
@@ -38,7 +38,7 @@ import { setEditorPosition } from '../QueryToolDataGrid/Editors';
 import { InputText } from '../../../../../../static/js/components/FormComponents';
 import { isEmptyString, minMaxValidator } from '../../../../../../static/js/validators';
 
-const StyledDiv = styled('div')(({theme})=>({
+const StyledDiv = styled('div')(({ theme }) => ({
   padding: '2px',
   display: 'flex',
   alignItems: 'center',
@@ -59,14 +59,14 @@ const StyledDiv = styled('div')(({theme})=>({
   }
 }));
 
-const StyledEditor = styled('div')(({theme})=>({
+const StyledEditor = styled('div')(({ theme }) => ({
   position: 'absolute',
   backgroundColor: theme.palette.background.default,
   fontSize: '12px',
   ...theme.mixins.panelBorder.all,
-  maxWidth:'50%',
-  overflow:'auto',
-  maxHeight:'35%',
+  maxWidth: '50%',
+  overflow: 'auto',
+  maxHeight: '35%',
   '& .textarea': {
     border: 0,
     outline: 0,
@@ -74,16 +74,16 @@ const StyledEditor = styled('div')(({theme})=>({
   }
 }));
 
-function ShowDataOutputQueryPopup({query}) {
+function ShowDataOutputQueryPopup({ query }) {
   function suppressEnterKey(e) {
-    if(e.keyCode == 13) {
+    if (e.keyCode == 13) {
       e.stopPropagation();
     }
   }
 
   return (
     <Portal container={document.body}>
-      <StyledEditor ref={(ele)=>{
+      <StyledEditor ref={(ele) => {
         setEditorPosition(document.getElementById('sql-query'), ele, '.MuiBox-root', 29);
       }} onKeyDown={suppressEnterKey}>
         <CodeMirror
@@ -100,7 +100,7 @@ ShowDataOutputQueryPopup.propTypes = {
 };
 
 
-function PaginationInputs({pagination, totalRowCount, clearSelection, serverCursor=false}) {
+function PaginationInputs({ pagination, totalRowCount, clearSelection, serverCursor = false }) {
   const eventBus = useContext(QueryToolEventsContext);
   const [editPageRange, setEditPageRange] = useState(false);
   const [errorInputs, setErrorInputs] = useState({
@@ -120,31 +120,31 @@ function PaginationInputs({pagination, totalRowCount, clearSelection, serverCurs
     clearSelection();
   };
 
-  const goToPage = (pageNo)=>{
-    const from = (pageNo-1) * pagination.page_size + 1;
+  const goToPage = (pageNo) => {
+    const from = (pageNo - 1) * pagination.page_size + 1;
     const to = from + pagination.page_size - 1;
     fetchWindow(from, to);
   };
 
-  const onInputChange = (key, value)=>{
-    setInputs((prev)=>({...prev, [key]: value}));
+  const onInputChange = (key, value) => {
+    setInputs((prev) => ({ ...prev, [key]: value }));
   };
 
-  const onInputKeydown = (e)=>{
-    if(e.code === 'Enter' && !errorInputs.from && !errorInputs.to) {
+  const onInputKeydown = (e) => {
+    if (e.code === 'Enter' && !errorInputs.from && !errorInputs.to) {
       e.preventDefault();
       fetchWindow(inputs.from, inputs.to);
     }
   };
 
-  const onInputKeydownPageNo = (e)=>{
-    if(e.code === 'Enter' && !errorInputs.pageNo) {
+  const onInputKeydownPageNo = (e) => {
+    if (e.code === 'Enter' && !errorInputs.pageNo) {
       e.preventDefault();
       goToPage(inputs.pageNo);
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     setInputs({
       from: pagination.rows_from ?? 0,
       to: pagination.rows_to ?? 0,
@@ -153,22 +153,22 @@ function PaginationInputs({pagination, totalRowCount, clearSelection, serverCurs
     });
   }, [pagination, editPageRange]);
 
-  useEffect(()=>{
+  useEffect(() => {
     // validate
-    setErrorInputs((prev)=>{
-      let errors = {...prev};
+    setErrorInputs((prev) => {
+      let errors = { ...prev };
 
-      if(minMaxValidator('', parseInt(inputs.pageNo), 1, parseInt(inputs.pageCount)) || isEmptyString(inputs.pageNo)) {
+      if (minMaxValidator('', parseInt(inputs.pageNo), 1, parseInt(inputs.pageCount)) || isEmptyString(inputs.pageNo)) {
         errors.pageNo = true;
       } else {
         errors.pageNo = false;
       }
-      if(minMaxValidator('', parseInt(inputs.from), 1, parseInt(inputs.to)) || isEmptyString(inputs.from)) {
+      if (minMaxValidator('', parseInt(inputs.from), 1, parseInt(inputs.to)) || isEmptyString(inputs.from)) {
         errors.from = true;
       } else {
         errors.from = false;
       }
-      if(minMaxValidator('', parseInt(inputs.to), 1, totalRowCount) || isEmptyString(inputs.to)) {
+      if (minMaxValidator('', parseInt(inputs.to), 1, totalRowCount) || isEmptyString(inputs.to)) {
         errors.to = true;
       } else {
         errors.to = false;
@@ -186,12 +186,12 @@ function PaginationInputs({pagination, totalRowCount, clearSelection, serverCurs
           <InputText
             type="int"
             size="small"
-            controlProps={{maxLength: 7}}
+            controlProps={{ maxLength: 7 }}
             style={{
               maxWidth: '10ch'
             }}
             value={inputs.from}
-            onChange={(value)=>onInputChange('from', value)}
+            onChange={(value) => onInputChange('from', value)}
             onKeyDown={onInputKeydown}
             error={errorInputs['from']}
           />
@@ -199,12 +199,12 @@ function PaginationInputs({pagination, totalRowCount, clearSelection, serverCurs
           <InputText
             type="int"
             size="small"
-            controlProps={{maxLength: 7}}
+            controlProps={{ maxLength: 7 }}
             style={{
               maxWidth: '10ch'
             }}
             value={inputs.to}
-            onChange={(value)=>onInputChange('to', value)}
+            onChange={(value) => onInputChange('to', value)}
             onKeyDown={onInputKeydown}
             error={errorInputs['to']}
           />
@@ -213,12 +213,12 @@ function PaginationInputs({pagination, totalRowCount, clearSelection, serverCurs
         <PgButtonGroup>
           {editPageRange && <PgIconButton size="xs"
             title={editPageRange ? gettext('Apply (or press Enter on input)') : gettext('Edit range')}
-            onClick={()=>fetchWindow(inputs.from, inputs.to)}
+            onClick={() => fetchWindow(inputs.from, inputs.to)}
             disabled={errorInputs.from || errorInputs.to} icon={<CheckRoundedIcon />}
           />}
           <PgIconButton size="xs"
             title={editPageRange ? gettext('Cancel edit') : gettext('Edit range')}
-            onClick={()=>setEditPageRange((prev)=>!prev)}
+            onClick={() => setEditPageRange((prev) => !prev)}
             icon={editPageRange ? <EditOffRoundedIcon /> : <EditRoundedIcon />}
           />
         </PgButtonGroup>
@@ -227,7 +227,7 @@ function PaginationInputs({pagination, totalRowCount, clearSelection, serverCurs
           <PgIconButton size="xs"
             title={gettext('Show entire range')}
             disabled={inputs.from == 1 && inputs.to == totalRowCount}
-            onClick={()=>{
+            onClick={() => {
               onInputChange('from', 1);
               onInputChange('to', totalRowCount);
               fetchWindow(1, totalRowCount);
@@ -240,12 +240,12 @@ function PaginationInputs({pagination, totalRowCount, clearSelection, serverCurs
         <InputText
           type="int"
           size="small"
-          controlProps={{maxLength: 7}}
+          controlProps={{ maxLength: 7 }}
           style={{
             maxWidth: '10ch'
           }}
           value={inputs.pageNo}
-          onChange={(value)=>onInputChange('pageNo', value)}
+          onChange={(value) => onInputChange('pageNo', value)}
           onKeyDown={onInputKeydownPageNo}
           error={errorInputs['pageNo']}
         />
@@ -253,10 +253,10 @@ function PaginationInputs({pagination, totalRowCount, clearSelection, serverCurs
       </>}
       <div className='PaginationInputs-divider'>&nbsp;</div>
       <PgButtonGroup size="small">
-        <PgIconButton title={gettext('First Page')} disabled={pagination.page_no <= 1} onClick={()=>goToPage(1)} icon={<SkipPreviousRoundedIcon />}/>
-        <PgIconButton title={gettext('Previous Page')} disabled={pagination.page_no <= 1} onClick={()=>goToPage(pagination.page_no-1)} icon={<FastRewindRoundedIcon />}/>
-        <PgIconButton title={gettext('Next Page')} disabled={(pagination.page_no == pagination.page_count && !serverCursor) || (serverCursor && pagination.next_page == 0)} onClick={()=>goToPage(pagination.page_no+1)} icon={<FastForwardRoundedIcon />}/>
-        <PgIconButton title={gettext('Last Page')} disabled={pagination.page_no == pagination.page_count || serverCursor} onClick={()=>goToPage(pagination.page_count)} icon={<SkipNextRoundedIcon />} />
+        <PgIconButton title={gettext('First Page')} disabled={pagination.page_no <= 1} onClick={() => goToPage(1)} icon={<SkipPreviousRoundedIcon />} />
+        <PgIconButton title={gettext('Previous Page')} disabled={pagination.page_no <= 1} onClick={() => goToPage(pagination.page_no - 1)} icon={<FastRewindRoundedIcon />} />
+        <PgIconButton title={gettext('Next Page')} disabled={(pagination.page_no == pagination.page_count && !serverCursor) || (serverCursor && pagination.next_page == 0)} onClick={() => goToPage(pagination.page_no + 1)} icon={<FastForwardRoundedIcon />} />
+        <PgIconButton title={gettext('Last Page')} disabled={pagination.page_no == pagination.page_count || serverCursor} onClick={() => goToPage(pagination.page_count)} icon={<SkipNextRoundedIcon />} />
       </PgButtonGroup>
     </Box>
   );
@@ -267,10 +267,10 @@ PaginationInputs.propTypes = {
   clearSelection: PropTypes.func,
   serverCursor: PropTypes.bool,
 };
-export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, allRowsSelect}) {
+export function ResultSetToolbar({ query, canEdit, totalRowCount, pagination, allRowsSelect }) {
   const eventBus = useContext(QueryToolEventsContext);
   const queryToolCtx = useContext(QueryToolContext);
-  const [dataOutputQueryBtn,setDataOutputQueryBtn] = useState(false);
+  const [dataOutputQueryBtn, setDataOutputQueryBtn] = useState(false);
   const [buttonsDisabled, setButtonsDisabled] = useState({
     'save-data': true,
     'delete-rows': true,
@@ -282,49 +282,50 @@ export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, all
   /* Menu button refs */
   const copyMenuRef = React.useRef(null);
   const pasetMenuRef = React.useRef(null);
+  const downloadMenuRef = React.useRef(null);
 
   const queryToolPref = queryToolCtx.preferences.sqleditor;
 
-  const setDisableButton = useCallback((name, disable=true)=>{
-    setButtonsDisabled((prev)=>({...prev, [name]: disable}));
+  const setDisableButton = useCallback((name, disable = true) => {
+    setButtonsDisabled((prev) => ({ ...prev, [name]: disable }));
   }, []);
-  const saveData = useCallback(()=>{
+  const saveData = useCallback(() => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_SAVE_DATA);
   }, []);
-  const deleteRows = useCallback(()=>{
+  const deleteRows = useCallback(() => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_DELETE_ROWS);
   }, []);
-  const pasteRows = useCallback(async ()=>{
+  const pasteRows = useCallback(async () => {
     let copyUtils = new CopyData({
       quoting: queryToolPref.results_grid_quoting,
       quote_char: queryToolPref.results_grid_quote_char,
       field_separator: queryToolPref.results_grid_field_separator,
     });
     let copiedRows = copyUtils.getCopiedRows();
-    eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_ADD_ROWS, copiedRows, {fromClipboard: true, pasteSerials: checkedMenuItems['paste_with_serials']});
+    eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_ADD_ROWS, copiedRows, { fromClipboard: true, pasteSerials: checkedMenuItems['paste_with_serials'] });
   }, [queryToolPref, checkedMenuItems['paste_with_serials']]);
-  const copyData = ()=>{
+  const copyData = () => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.COPY_DATA, checkedMenuItems['copy_with_headers']);
   };
-  const addRow = useCallback(()=>{
-    eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_ADD_ROWS, [[]], {isNewRow: true});
+  const addRow = useCallback(() => {
+    eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_ADD_ROWS, [[]], { isNewRow: true });
   }, []);
-  const downloadResult = useCallback(()=>{
+  const downloadResult = useCallback(() => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_SAVE_RESULTS);
   }, []);
-  const showGraphVisualiser = useCallback(()=>{
+  const showGraphVisualiser = useCallback(() => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_GRAPH_VISUALISER);
   }, []);
 
-  const openMenu = useCallback((e)=>{
+  const openMenu = useCallback((e) => {
     setMenuOpenId(e.currentTarget.name);
   }, []);
-  const handleMenuClose = useCallback(()=>{
+  const handleMenuClose = useCallback(() => {
     setMenuOpenId(null);
   }, []);
 
-  const checkMenuClick = useCallback((e)=>{
-    setCheckedMenuItems((prev)=>{
+  const checkMenuClick = useCallback((e) => {
+    setCheckedMenuItems((prev) => {
       let newVal = !prev[e.value];
       return {
         ...prev,
@@ -334,23 +335,23 @@ export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, all
   }, []);
 
 
-  useEffect(()=>{
-    eventBus.registerListener(QUERY_TOOL_EVENTS.DATAGRID_CHANGED, (isDirty)=>{
+  useEffect(() => {
+    eventBus.registerListener(QUERY_TOOL_EVENTS.DATAGRID_CHANGED, (isDirty) => {
       setDisableButton('save-data', !isDirty);
     });
-    eventBus.registerListener(QUERY_TOOL_EVENTS.SELECTED_ROWS_COLS_CELL_CHANGED, (rows, cols, range, cell)=>{
+    eventBus.registerListener(QUERY_TOOL_EVENTS.SELECTED_ROWS_COLS_CELL_CHANGED, (rows, cols, range, cell) => {
       setDisableButton('delete-rows', !rows);
       setDisableButton('copy-rows', (!rows && !cols && !cell && !range));
     });
   }, []);
 
-  useEffect(()=>{
-    setDisableButton('save-result', (totalRowCount||0) < 1);
+  useEffect(() => {
+    setDisableButton('save-result', (totalRowCount || 0) < 1);
   }, [totalRowCount]);
 
-  useEffect(()=>{
+  useEffect(() => {
     eventBus.registerListener(QUERY_TOOL_EVENTS.TRIGGER_COPY_DATA, copyData);
-    return ()=>eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_COPY_DATA, copyData);
+    return () => eventBus.deregisterListener(QUERY_TOOL_EVENTS.TRIGGER_COPY_DATA, copyData);
   }, [checkedMenuItems['copy_with_headers']]);
 
   const FIXED_PREF = {
@@ -370,31 +371,31 @@ export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, all
     {
       shortcut: queryToolPref.btn_add_row,
       options: {
-        callback: ()=>{canEdit && addRow();}
+        callback: () => { canEdit && addRow(); }
       }
     },
     {
       shortcut: queryToolPref.btn_paste_row,
       options: {
-        callback: ()=>{canEdit && pasteRows();}
+        callback: () => { canEdit && pasteRows(); }
       }
     },
     {
       shortcut: queryToolPref.btn_delete_row,
       options: {
-        callback: ()=>{!(buttonsDisabled['delete-rows'] || !canEdit) && deleteRows();}
+        callback: () => { !(buttonsDisabled['delete-rows'] || !canEdit) && deleteRows(); }
       }
     },
     {
       shortcut: queryToolPref.save_data,
       options: {
-        callback: ()=>{!buttonsDisabled['save-data'] && saveData();}
+        callback: () => { !buttonsDisabled['save-data'] && saveData(); }
       }
     },
     {
       shortcut: queryToolPref.download_results,
       options: {
-        callback: (e)=>{
+        callback: (e) => {
           if (!buttonsDisabled['save-result']) {
             e.preventDefault();
             downloadResult();
@@ -404,8 +405,13 @@ export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, all
     },
   ], queryToolCtx.mainContainerRef);
 
-  const clearSelection = ()=>{
+  const clearSelection = () => {
     eventBus.fireEvent(QUERY_TOOL_EVENTS.CLEAR_ROWS_SELECTED);
+  };
+
+  const downloadWithFormat = (format) => {
+    eventBus.fireEvent(QUERY_TOOL_EVENTS.TRIGGER_SAVE_RESULTS, { format: format });
+    handleMenuClose();
   };
 
   return (
@@ -413,10 +419,10 @@ export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, all
       <StyledDiv>
         <Box display="flex" alignItems="center" gap="4px">
           <PgButtonGroup size="small">
-            <PgIconButton title={gettext('Add row')} icon={<PlaylistAddRoundedIcon style={{height: 'unset'}}/>}
+            <PgIconButton title={gettext('Add row')} icon={<PlaylistAddRoundedIcon style={{ height: 'unset' }} />}
               shortcut={queryToolPref.btn_add_row} disabled={!canEdit} onClick={addRow} />
             <PgIconButton title={gettext('Copy')} icon={<FileCopyRoundedIcon />}
-              shortcut={FIXED_PREF.copy} disabled={buttonsDisabled['copy-rows']||allRowsSelect=='ALL'} onClick={copyData} />
+              shortcut={FIXED_PREF.copy} disabled={buttonsDisabled['copy-rows'] || allRowsSelect == 'ALL'} onClick={copyData} />
             <PgIconButton title={gettext('Copy options')} icon={<KeyboardArrowDownIcon />} splitButton
               name="menu-copyheader" ref={copyMenuRef} onClick={openMenu} />
             <PgIconButton title={gettext('Paste')} icon={<PasteIcon />}
@@ -428,11 +434,14 @@ export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, all
           </PgButtonGroup>
           <PgButtonGroup size="small">
             <PgIconButton title={gettext('Save Data Changes')} icon={<SaveDataIcon />}
-              shortcut={queryToolPref.save_data} disabled={buttonsDisabled['save-data'] || !canEdit} onClick={saveData}/>
+              shortcut={queryToolPref.save_data} disabled={buttonsDisabled['save-data'] || !canEdit} onClick={saveData} />
           </PgButtonGroup>
           <PgButtonGroup size="small">
             <PgIconButton title={gettext('Save results to file')} icon={<GetAppRoundedIcon />}
               onClick={downloadResult} shortcut={queryToolPref.download_results}
+              disabled={buttonsDisabled['save-result']} />
+            <PgIconButton title={gettext('Download options')} icon={<KeyboardArrowDownIcon />} splitButton
+              name="menu-downloadoptions" ref={downloadMenuRef} onClick={openMenu}
               disabled={buttonsDisabled['save-result']} />
           </PgButtonGroup>
           <PgButtonGroup size="small">
@@ -440,20 +449,20 @@ export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, all
               onClick={showGraphVisualiser} disabled={buttonsDisabled['save-result']} />
           </PgButtonGroup>
           {query &&
-          <>
-            <PgButtonGroup size="small">
-              <PgIconButton title={gettext('SQL query of data')} icon={<SQLQueryIcon />}
-                onClick={()=>{setDataOutputQueryBtn(prev=>!prev);}} onBlur={()=>{setDataOutputQueryBtn(false);}} disabled={!query} id='sql-query'/>
-            </PgButtonGroup>
-            { dataOutputQueryBtn && <ShowDataOutputQueryPopup query={query} />}
-          </>
+            <>
+              <PgButtonGroup size="small">
+                <PgIconButton title={gettext('SQL query of data')} icon={<SQLQueryIcon />}
+                  onClick={() => { setDataOutputQueryBtn(prev => !prev); }} onBlur={() => { setDataOutputQueryBtn(false); }} disabled={!query} id='sql-query' />
+              </PgButtonGroup>
+              {dataOutputQueryBtn && <ShowDataOutputQueryPopup query={query} />}
+            </>
           }
           {
             allRowsSelect == 'PAGE' && totalRowCount > pagination.page_size && (
               <div>
                 <span>{gettext('All rows on this page are selected.')}</span>
                 <PgButtonGroup size="small">
-                  <DefaultButton onClick={()=>eventBus.fireEvent(QUERY_TOOL_EVENTS.ALL_ROWS_SELECTED)}>Select All {totalRowCount} Rows</DefaultButton>
+                  <DefaultButton onClick={() => eventBus.fireEvent(QUERY_TOOL_EVENTS.ALL_ROWS_SELECTED)}>Select All {totalRowCount} Rows</DefaultButton>
                 </PgButtonGroup>
               </div>
             )
@@ -470,13 +479,13 @@ export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, all
           }
         </Box>
         {totalRowCount > 0 &&
-        <Box>
-          <PaginationInputs key={JSON.stringify(pagination)} pagination={pagination} totalRowCount={totalRowCount} clearSelection={clearSelection} serverCursor={queryToolCtx.server_cursor}/>
-        </Box>}
+          <Box>
+            <PaginationInputs key={JSON.stringify(pagination)} pagination={pagination} totalRowCount={totalRowCount} clearSelection={clearSelection} serverCursor={queryToolCtx.server_cursor} />
+          </Box>}
       </StyledDiv>
       <PgMenu
         anchorRef={copyMenuRef}
-        open={menuOpenId=='menu-copyheader'}
+        open={menuOpenId == 'menu-copyheader'}
         onClose={handleMenuClose}
         label={gettext('Copy Options Menu')}
       >
@@ -484,11 +493,22 @@ export function ResultSetToolbar({query, canEdit, totalRowCount, pagination, all
       </PgMenu>
       <PgMenu
         anchorRef={pasetMenuRef}
-        open={menuOpenId=='menu-pasteoptions'}
+        open={menuOpenId == 'menu-pasteoptions'}
         onClose={handleMenuClose}
         label={gettext('Paste Options Menu')}
       >
         <PgMenuItem hasCheck value="paste_with_serials" checked={checkedMenuItems['paste_with_serials']} onClick={checkMenuClick}>{gettext('Paste with SERIAL/IDENTITY values?')}</PgMenuItem>
+      </PgMenu>
+      <PgMenu
+        anchorRef={downloadMenuRef}
+        open={menuOpenId == 'menu-downloadoptions'}
+        onClose={handleMenuClose}
+        label={gettext('Download Options Menu')}
+      >
+        <PgMenuItem onClick={() => downloadWithFormat('csv')}>{gettext('CSV')}</PgMenuItem>
+        <PgMenuItem onClick={() => downloadWithFormat('tsv')}>{gettext('TSV')}</PgMenuItem>
+        <PgMenuItem onClick={() => downloadWithFormat('json')}>{gettext('JSON')}</PgMenuItem>
+        <PgMenuItem onClick={() => downloadWithFormat('jsonl')}>{gettext('JSON Lines (JSONL)')}</PgMenuItem>
       </PgMenu>
     </>
   );
