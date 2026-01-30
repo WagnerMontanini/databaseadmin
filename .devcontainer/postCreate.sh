@@ -18,8 +18,25 @@ echo "[devcontainer] Configurando pgAdmin DATA_DIR/SQLITE_PATH (config_local.py)
 PGADMIN_DATA_DIR="${HOME}/.pgadmin_dev"
 mkdir -p "${PGADMIN_DATA_DIR}"
 
+# PostgreSQL client utilities dentro do devcontainer (pg_dump/psql/etc)
+# Para upgrades, ajuste apenas esta versão (ou sobrescreva via env var).
+PGADMIN_PG_MAJOR_VERSION="${PGADMIN_PG_MAJOR_VERSION:-16}"
+PGADMIN_PG_BIN_DIR="/usr/lib/postgresql/${PGADMIN_PG_MAJOR_VERSION}/bin"
+
+emit_default_binary_paths() {
+  cat <<EOF
+# Postgres client utilities dentro do devcontainer (pg_dump/psql/etc)
+# Isso evita o erro "Utility file not found. Please correct the Binary Path..."
+DEFAULT_BINARY_PATHS = {
+    "pg": "${PGADMIN_PG_BIN_DIR}",
+    "pg-${PGADMIN_PG_MAJOR_VERSION}": "${PGADMIN_PG_BIN_DIR}",
+}
+EOF
+}
+
 if [ ! -f "web/config_local.py" ]; then
-  cat > "web/config_local.py" <<EOF
+  {
+    cat <<EOF
 import os
 
 # Devcontainer: manter dados em diretório gravável pelo usuário do container
@@ -35,14 +52,9 @@ SERVER_MODE = False
 SQLITE_PATH = os.path.join(DATA_DIR, "pgadmin4-desktop.db")
 SESSION_DB_PATH = os.path.join(DATA_DIR, "sessions")
 STORAGE_DIR = os.path.join(DATA_DIR, "storage")
-
-# Postgres client utilities dentro do devcontainer (pg_dump/psql/etc)
-# Isso evita o erro "Utility file not found. Please correct the Binary Path..."
-DEFAULT_BINARY_PATHS = {
-    "pg": "/usr/lib/postgresql/16/bin",
-    "pg-16": "/usr/lib/postgresql/16/bin",
-}
 EOF
+    emit_default_binary_paths
+  } > "web/config_local.py"
 fi
 
 mkdir -p "${PGADMIN_DATA_DIR}/sessions" "${PGADMIN_DATA_DIR}/storage"
@@ -50,14 +62,10 @@ mkdir -p "${PGADMIN_DATA_DIR}/sessions" "${PGADMIN_DATA_DIR}/storage"
 # Se o config_local.py já existia antes (ex.: de um rebuild anterior),
 # garanta que o DEFAULT_BINARY_PATHS esteja definido.
 if [ -f "web/config_local.py" ] && ! grep -q "DEFAULT_BINARY_PATHS" "web/config_local.py"; then
-  cat >> "web/config_local.py" <<'EOF'
-
-# Postgres client utilities dentro do devcontainer (pg_dump/psql/etc)
-DEFAULT_BINARY_PATHS = {
-    "pg": "/usr/lib/postgresql/16/bin",
-    "pg-16": "/usr/lib/postgresql/16/bin",
-}
-EOF
+  {
+    echo ""
+    emit_default_binary_paths
+  } >> "web/config_local.py"
 fi
 
 echo "[devcontainer] Atualizando pip..."
