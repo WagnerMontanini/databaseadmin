@@ -39,8 +39,8 @@ let webpackShimConfig = {
     'jsoneditor': path.join(__dirname, './node_modules/jsoneditor'),
     'color-picker': path.join(__dirname, './node_modules/@simonwep/pickr/dist/pickr.es5.min'),
     'mousetrap': path.join(__dirname, './node_modules/mousetrap'),
-    'pathfinding': path.join(__dirname, 'node_modules/pathfinding'),
-    'dagre': path.join(__dirname, 'node_modules/dagre'),
+    'pathfinding':  path.join(__dirname, 'node_modules/pathfinding'),
+    'dagre':  path.join(__dirname, 'node_modules/dagre'),
     'graphlib': path.join(__dirname, 'node_modules/graphlib'),
     'react': path.join(__dirname, 'node_modules/react'),
     'react-dom': path.join(__dirname, 'node_modules/react-dom'),
@@ -140,7 +140,6 @@ let webpackShimConfig = {
     'pgadmin.server.supported_servers': path.join(__dirname, '/browser/server/supported_servers'),
     'pgadmin.tables.js': path.join(__dirname, './pgadmin/browser/server_groups/servers/databases/schemas/tables/static/js/'),
     'pgadmin.tools.backup': path.join(__dirname, './pgadmin/tools/backup/static/js/backup'),
-    'pgadmin.tools.sql_export': path.join(__dirname, './pgadmin/tools/sql_export/static/js/sql_export'),
     'pgadmin.tools.debugger': path.join(__dirname, './pgadmin/tools/debugger/static/js/'),
     'pgadmin.tools.debugger.ui': path.join(__dirname, './pgadmin/tools/debugger/static/js/debugger_ui'),
     'pgadmin.tools.debugger.utils': path.join(__dirname, './pgadmin/tools/debugger/static/js/debugger_utils'),
@@ -173,10 +172,10 @@ let webpackShimConfig = {
     'pgadmin.browser.events', 'pgadmin',
     'pgadmin.browser',
     'pgadmin.browser.node',
-    'pgadmin.settings', 'pgadmin.sqlfoldcode',
+    'pgadmin.settings','pgadmin.sqlfoldcode',
   ],
   // Checks whether JS module is npm module or not
-  isExternal: function (module) {
+  isExternal: function(module) {
     let context = module.context;
     if (typeof context !== 'string') { return false; }
     return (context.indexOf('node_modules') !== -1 || context.indexOf('vendor') !== -1);
@@ -186,19 +185,19 @@ let webpackShimConfig = {
     if (module.rawRequest === undefined) { return false; }
     return this.pgLibs.indexOf(module.rawRequest) !== -1;
   },
-  isBrowserNode: function (module) {
+  isBrowserNode: function(module) {
     if (module.rawRequest === undefined) { return false; }
     return module.rawRequest.startsWith('pgadmin.node');
   },
-  matchModules: function (module, match_modules) {
+  matchModules: function(module, match_modules) {
     if (module.rawRequest === undefined) { return false; }
-    if (typeof match_modules === 'string') {
-      if (module.rawRequest.indexOf(match_modules) >= 0) {
+    if(typeof match_modules === 'string') {
+      if(module.rawRequest.indexOf(match_modules) >= 0) {
         return true;
       }
     } else {
-      for (let value of match_modules) {
-        if (module.rawRequest.indexOf(value) >= 0) {
+      for(let value of match_modules) {
+        if(module.rawRequest.indexOf(value) >= 0) {
           return true;
         }
       }

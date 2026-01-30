@@ -35,9 +35,9 @@ try {
   console.warn('Sharp is not available, image optimization will be disabled.');
 }
 
-const envType = PRODUCTION ? 'production' : 'development';
+const envType = PRODUCTION ? 'production': 'development';
 const devToolVal = PRODUCTION ? false : 'eval';
-const analyzerMode = process.env.ANALYZE == 'true' ? 'static' : 'disabled';
+const analyzerMode = process.env.ANALYZE=='true' ? 'static' : 'disabled';
 
 const outputPath = __dirname + '/pgadmin/static/js/generated';
 
@@ -47,7 +47,7 @@ const providePlugin = new webpack.ProvidePlugin({
   _: 'lodash',
   pgAdmin: 'sources/pgadmin',
   'moment': 'moment',
-  'window.moment': 'moment',
+  'window.moment':'moment',
   process: 'process/browser',
   Buffer: ['buffer', 'Buffer'],
 });
@@ -129,18 +129,18 @@ module.exports = [{
         },
         'webfonts-loader',
       ],
-    }, {
+    },{
       test: /\.m?js$/,
       resolve: {
         fullySpecified: false
       },
-    }, {
+    },{
       test: /\.tsx?$|\.ts?$|\.jsx?$/,
       exclude: [/node_modules/, /vendor/],
       use: {
         loader: 'babel-loader',
         options: {
-          presets: [['@babel/preset-env', { 'modules': 'commonjs', 'useBuiltIns': 'usage', 'corejs': 3 }], ['@babel/preset-react', {
+          presets: [['@babel/preset-env', {'modules': 'commonjs', 'useBuiltIns': 'usage', 'corejs': 3}], ['@babel/preset-react', {
             'runtime': 'automatic'
           }], '@babel/preset-typescript'],
           plugins: ['@babel/plugin-proposal-class-properties', '@babel/proposal-object-rest-spread'],
@@ -151,7 +151,7 @@ module.exports = [{
       use: {
         loader: 'babel-loader',
         options: {
-          presets: [['@babel/preset-env', { 'modules': 'commonjs', 'useBuiltIns': 'usage', 'corejs': 3 }]],
+          presets: [['@babel/preset-env', {'modules': 'commonjs', 'useBuiltIns': 'usage', 'corejs': 3}]],
         },
       },
     }, {
@@ -234,7 +234,7 @@ module.exports = [{
           ],
         },
       },
-    }, {
+    },{
       test: require.resolve('./pgadmin/static/bundle/browser'),
       use: {
         loader: 'imports-loader',
@@ -245,7 +245,6 @@ module.exports = [{
             'pure|pgadmin.preferences',
             'pure|pgadmin.settings',
             'pure|pgadmin.tools.backup',
-            'pure|pgadmin.tools.sql_export',
             'pure|pgadmin.tools.restore',
             'pure|pgadmin.tools.grant_wizard',
             'pure|pgadmin.tools.maintenance',
@@ -281,7 +280,7 @@ module.exports = [{
           }
         },
       ],
-    }, {
+    },{
       test: /\.(jpe?g|png|gif)$/i,
       type: 'asset',
       parser: {
@@ -293,7 +292,7 @@ module.exports = [{
         filename: 'img/[name].[ext]',
       },
       exclude: /vendor/,
-    }, {
+    },{
       test: /\.(eot|ttf|woff|woff2)$/,
       type: 'asset/resource',
       generator: {
@@ -319,7 +318,7 @@ module.exports = [{
         {
           loader: 'postcss-loader',
           options: {
-            postcssOptions: () => ({
+            postcssOptions: () =>({
               plugins: [
                 require('autoprefixer')(),
               ],
@@ -464,7 +463,7 @@ module.exports = [{
     sourceMapDevToolPlugin,
     bundleAnalyzer,
     copyFiles,
-  ] : [
+  ]: [
     extractStyle,
     providePlugin,
     sourceMapDevToolPlugin,
